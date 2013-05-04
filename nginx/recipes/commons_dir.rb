@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: nginx
-# Recipe:: default
+# Recipe:: common/dir
 # Author:: AJ Christensen <aj@junglist.gen.nz>
 #
 # Copyright 2008-2012, Opscode, Inc.
@@ -18,29 +18,24 @@
 # limitations under the License.
 #
 
-include_recipe 'nginx::ohai_plugin'
-
-case node['nginx']['install_method']
-when 'source'
-  include_recipe 'nginx::source'
-when 'package'
-  case node['platform']
-  when 'redhat','centos','scientific','amazon','oracle'
-    if node['nginx']['repo_source'] == 'epel'
-      include_recipe 'yum::epel'
-    else
-      include_recipe 'nginx::repo'
-    end
-  end
-  package node['nginx']['package_name']
-  service 'nginx' do
-    supports :status => true, :restart => true, :reload => true
-    action :enable
-  end
-  include_recipe 'nginx::commons'
+directory node['nginx']['dir'] do
+  owner "root"
+  group "root"
+  mode 00755
+  recursive true
 end
 
-service 'nginx' do
-  supports :status => true, :restart => true, :reload => true
-  action :start
+directory node['nginx']['log_dir'] do
+  mode 00755
+  owner node['nginx']['user']
+  action :create
+  recursive true
+end
+
+%w(sites-available sites-enabled conf.d).each do |leaf|
+  directory File.join(node['nginx']['dir'], leaf) do
+    owner "root"
+    group "root"
+    mode 00755
+  end
 end

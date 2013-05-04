@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: nginx
-# Recipe:: default
+# Recipe:: common/script
 # Author:: AJ Christensen <aj@junglist.gen.nz>
 #
 # Copyright 2008-2012, Opscode, Inc.
@@ -18,29 +18,11 @@
 # limitations under the License.
 #
 
-include_recipe 'nginx::ohai_plugin'
-
-case node['nginx']['install_method']
-when 'source'
-  include_recipe 'nginx::source'
-when 'package'
-  case node['platform']
-  when 'redhat','centos','scientific','amazon','oracle'
-    if node['nginx']['repo_source'] == 'epel'
-      include_recipe 'yum::epel'
-    else
-      include_recipe 'nginx::repo'
-    end
+%w(nxensite nxdissite).each do |nxscript|
+  template "/usr/sbin/#{nxscript}" do
+    source "#{nxscript}.erb"
+    mode 00755
+    owner "root"
+    group "root"
   end
-  package node['nginx']['package_name']
-  service 'nginx' do
-    supports :status => true, :restart => true, :reload => true
-    action :enable
-  end
-  include_recipe 'nginx::commons'
-end
-
-service 'nginx' do
-  supports :status => true, :restart => true, :reload => true
-  action :start
 end
